@@ -2,7 +2,7 @@
 
 import re
 from pytest import raises
-from mcb import Trigger, World, abort
+from mcb import Trigger, World, dont_abort
 
 patterns = ('test', 'this', 'stuff')
 
@@ -183,22 +183,27 @@ def test_handle_line_multiple_triggers():
         l.append('world')
 
     w.handle_line('test')
-    assert l == ['hello', 'world']
+    assert l == ['hello']
 
 
-def test_handle_line_abort():
+def test_handle_line_dont_abort():
     l = []
     w = World()
     pattern = '^test ([^$]+)$'
+
+    def f(text):
+        l.append(text)
+        dont_abort()
+
     for x in range(2):
-        w.trigger(pattern)(l.append)
+        w.trigger(pattern)(f)
     w.handle_line('test this')
     assert l == ['this', 'this']
-    w.trigger(pattern)(lambda thing: abort())
+    w.trigger(pattern)(l.append)
     w.trigger(pattern)(l.append)
     l.clear()
     w.handle_line('test test')
-    assert l == ['test', 'test']
+    assert l == ['test', 'test', 'test']
 
 
 def test_handle_line_priority():

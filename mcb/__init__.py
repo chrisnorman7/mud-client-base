@@ -7,20 +7,20 @@ from attr import attrs, attrib, Factory
 __all__ = [
     'Trigger',
     'World',
-    'AbortException',
-    'abort'
+    'DontAbortException',
+    'dont_abort'
 ]
 
 
-class AbortException(Exception):
-    """Raised by abort."""
+class DontAbortException(Exception):
+    """Raised by dont_abort."""
     pass
 
 
-def abort():
-    """Use this function to prevent any more triggers from firing. Simply
-    raises AbortException."""
-    raise AbortException()
+def dont_abort():
+    """Use this function to continue searching for triggers. Simply raises
+    AbortException."""
+    raise DontAbortException()
 
 
 @attrs
@@ -141,5 +141,6 @@ class World:
             if m:
                 try:
                     trigger.func(*m.groups(), **m.groupdict())
-                except AbortException as e:
                     break
+                except DontAbortException:
+                    continue
