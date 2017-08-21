@@ -119,7 +119,7 @@ class World:
                 triggers.append(trigger)
         self.activate_triggers(triggers)
 
-    def disable_classes(self, **classes):
+    def disable_classes(self, *classes):
         """Disable 0 or more classes, automatically activating and deactivating
         triggers."""
         self.classes = [c for c in self.classes if c not in classes]

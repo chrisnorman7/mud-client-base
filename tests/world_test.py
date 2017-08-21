@@ -133,6 +133,20 @@ def test_enable_classes():
     assert len(w.active_triggers) is len(patterns)
 
 
+def test_disable_classes():
+    class_name = 'inactive'
+    w = World()
+    w.enable_classes(class_name)
+    triggers = []
+    for pattern in patterns:
+        triggers.append(w.trigger(pattern, classes=(class_name,))(print))
+    assert not w.inactive_triggers
+    assert len(w.active_triggers) is len(patterns)
+    w.disable_classes(class_name)
+    assert not w.active_triggers
+    assert len(w.inactive_triggers) is len(patterns)
+
+
 def test_handle_line_no_triggers():
     w = World()
     w.handle_line('test')
