@@ -4,7 +4,18 @@ import re
 from pytest import raises
 from mcb import Trigger, World, dont_abort
 
+_extra = 'Testing stuff.'
 patterns = ('test', 'this', 'stuff')
+
+
+class BuildArgsWorks(Exception):
+    pass
+
+
+class CustomWorld(World):
+    def build_args(self, trigger, match, extra):
+        assert extra is _extra
+        raise BuildArgsWorks()
 
 
 class TriggerWorkedException(Exception):
@@ -227,3 +238,11 @@ def test_handle_line_priority():
     w.trigger(line, priority=-1)(f1)
     with raises(TriggerWorkedException):
         w.handle_line(line)
+
+
+def test_build_args():
+    w = CustomWorld()
+    w.handle_line('No triggers to match.')
+    w.trigger('^test$')(print)
+    with raises(BuildArgsWorks):
+        w.handle_line('test', _extra)

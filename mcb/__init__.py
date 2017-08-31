@@ -40,6 +40,11 @@ class World:
     classes.
 
     Use the trigger decorator to add new triggers.
+    Override build_args to provide a callable which will return a 2-element
+    tuple of (args, kwargs) which will be sent to your functions. This callable
+    should expect the trigger which was matched as the first argument, then the
+    regexp match as returned by trigger.regexp.match, then any arguments and
+    keyword arguments passed to handle_line.
     Use enable_class and disable_class to enable or disable a class
     respectively.
     Override the is_active method to configure whether or not triggers are
@@ -58,7 +63,8 @@ class World:
         which will be converted to a regular expression. Any extra keyword
         arguments are passed to the class constructor. The decorated function
         will be passed the groups from the regular expression as positional
-        arguments, and any named groups as keyword arguments."""
+        arguments, and any named groups as keyword arguments unless a function
+        has been decorated with the build_args decorator."""
         regexp = re.compile(pattern)
 
         def inner(func):
@@ -82,6 +88,11 @@ class World:
                 c for c in trigger.classes if c in self.classes
             ]
         )
+
+    def build_args(self, trigger, match):
+        """Generate the positional and keyword arguments for passing to
+        functions. Returns a 2-element tuple of (args, kwargs)."""
+        return (match.groups(), match.groupdict())
 
     def sorted_key(self, trigger):
         """By default returns trigger.priority."""
@@ -129,18 +140,22 @@ class World:
                 triggers.append(trigger)
         self.deactivate_triggers(triggers)
 
-    def handle_line(self, line):
+    def handle_line(self, line, *args, **kwargs):
         """Check the line for triggers and run the appropriate functions. Any
         matched triggers will have their functions called with the groups and
-        named groups from the regular expression as arguments."""
+        named groups from the regular expression as arguments unless the
+        build_args decorator has been used."""
         for trigger in sorted(
             self.active_triggers,
             key=self.sorted_key
         ):
             m = trigger.regexp.match(line)
             if m:
+                positional, named = self.build_args(
+                    trigger, m, *args, **kwargs
+                )
                 try:
-                    trigger.func(*m.groups(), **m.groupdict())
+                    trigger.func(*positional, **named)
                     break
                 except DontAbortException:
                     continue
