@@ -42,9 +42,9 @@ class World:
     Use the trigger decorator to add new triggers.
     Override build_args to provide a callable which will return a 2-element
     tuple of (args, kwargs) which will be sent to your functions. This callable
-    should expect the trigger which was matched as the first argument, then the
-    regexp match as returned by trigger.regexp.match, then any arguments and
-    keyword arguments passed to handle_line.
+    should expect the trigger which was matched, the regexp match as returned
+    by trigger.regexp.match, then any arguments and keyword arguments passed to
+    handle_line as arguments.
     Use enable_class and disable_class to enable or disable a class
     respectively.
     Override the is_active method to configure whether or not triggers are
@@ -62,9 +62,7 @@ class World:
         """A decorator to add triggers. The only required argument is pattern
         which will be converted to a regular expression. Any extra keyword
         arguments are passed to the class constructor. The decorated function
-        will be passed the groups from the regular expression as positional
-        arguments, and any named groups as keyword arguments unless a function
-        has been decorated with the build_args decorator."""
+        will be passed arguments according to build_args."""
         regexp = re.compile(pattern)
 
         def inner(func):
@@ -89,10 +87,13 @@ class World:
             ]
         )
 
-    def build_args(self, trigger, match):
+    def build_args(self, trigger, match, *args, **kwargs):
         """Generate the positional and keyword arguments for passing to
         functions. Returns a 2-element tuple of (args, kwargs)."""
-        return (match.groups(), match.groupdict())
+        return (
+            (*match.groups(), *args),
+            dict(**match.groupdict(), **kwargs)
+        )
 
     def sorted_key(self, trigger):
         """By default returns trigger.priority."""
