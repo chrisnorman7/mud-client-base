@@ -246,3 +246,13 @@ def test_build_args():
     w.trigger('^test$')(print)
     with raises(BuildArgsWorks):
         w.handle_line('test', _extra)
+
+
+def test_number_single():
+    w = World()
+    w.trigger('^test$')(print)
+    w.trigger('^this$')(print)
+    assert w.handle_line('test') == 1
+    assert w.handle_line('this') == 1
+    w.trigger('test', priority=-1)(dont_abort)  # Make sure it's first.
+    assert w.handle_line('test') == 2

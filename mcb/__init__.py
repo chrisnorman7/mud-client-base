@@ -145,7 +145,9 @@ class World:
         """Check the line for triggers and run the appropriate functions. Any
         matched triggers will have their functions called with the groups and
         named groups from the regular expression as arguments unless the
-        build_args decorator has been used."""
+        build_args decorator has been used.
+        Returns the number of matched triggers."""
+        matched = 0
         for trigger in sorted(
             self.active_triggers,
             key=self.sorted_key
@@ -155,8 +157,10 @@ class World:
                 positional, named = self.build_args(
                     trigger, m, *args, **kwargs
                 )
+                matched += 1
                 try:
                     trigger.func(*positional, **named)
                     break
                 except DontAbortException:
                     continue
+        return matched
