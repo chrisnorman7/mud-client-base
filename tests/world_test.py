@@ -196,39 +196,39 @@ def test_handle_line_multiple_classes():
 
 
 def test_handle_line_multiple_triggers():
-    l = []
+    results = []
     w = World()
 
     @w.trigger('^test$')
     def test1():
-        l.append('hello')
+        results.append('hello')
 
     @w.trigger('^test$')
     def test2():
-        l.append('world')
+        results.append('world')
 
     w.handle_line('test')
-    assert l == ['hello']
+    assert results == ['hello']
 
 
 def test_handle_line_dont_abort():
-    l = []
+    results = []
     w = World()
     pattern = '^test ([^$]+)$'
 
     def f(text):
-        l.append(text)
+        results.append(text)
         dont_abort()
 
     for x in range(2):
         w.trigger(pattern)(f)
     w.handle_line('test this')
-    assert l == ['this', 'this']
-    w.trigger(pattern)(l.append)
-    w.trigger(pattern)(l.append)
-    l.clear()
+    assert results == ['this', 'this']
+    w.trigger(pattern)(results.append)
+    w.trigger(pattern)(results.append)
+    results.clear()
     w.handle_line('test test')
-    assert l == ['test', 'test', 'test']
+    assert results == ['test', 'test', 'test']
 
 
 def test_handle_line_priority():
