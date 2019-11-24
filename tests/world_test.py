@@ -32,7 +32,7 @@ def f1():
 
 def f2(name, age=None):
     assert name == 'Peter'
-    assert int(age) is 42
+    assert int(age) == 42
     raise TriggerWorkedException()
 
 
