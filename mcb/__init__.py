@@ -1,6 +1,9 @@
 """Provides the World class."""
 
 import re
+
+from inspect import signature, _empty
+
 from attr import attrs, attrib, Factory
 
 
@@ -31,6 +34,13 @@ class Trigger:
     func = attrib()
     classes = attrib(default=Factory(tuple))
     priority = attrib(default=Factory(int))
+    kwarg_names = attrib(default=Factory(list), init=False)
+
+    def __attrs_post_init__(self):
+        """Build the kwargs list."""
+        for p in signature(self.func).parameters.values():
+            if p.default is not _empty:
+                self.kwarg_names.append(p.name)
 
 
 @attrs
@@ -89,11 +99,22 @@ class World:
 
     def build_args(self, trigger, match, *args, **kwargs):
         """Generate the positional and keyword arguments for passing to
-        functions. Returns a 2-element tuple of (args, kwargs)."""
-        return (
-            (*match.groups(), *args),
-            dict(**match.groupdict(), **kwargs)
-        )
+        functions. Returns a 2-element tuple of (args, kwargs). Uses a trigger
+        function's keyword arguments to ascertain which values to extract from
+        kwargs."""
+        _args = (*match.groups(), *args)
+        _kwargs = match.groupdict().copy()
+        for position, name in enumerate(trigger.kwarg_names):
+            if name not in _kwargs:
+                try:
+                    _kwargs[name] = kwargs[name]
+                except KeyError:
+                    if len(_args) < position:
+                        raise RuntimeError(
+                            'No argument named %s was provided for trigger %r.'
+                            % trigger
+                        )
+        return (_args, _kwargs)
 
     def sorted_key(self, trigger):
         """By default returns trigger.priority."""
